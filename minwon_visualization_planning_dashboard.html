@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>민원처리 현황 시각화 개선 기획 대시보드</title>
+  <style>
+    :root{
+      --bg:#f4f6f8;
+      --panel:#ffffff;
+      --text:#1f2937;
+      --muted:#667085;
+      --line:#e5e7eb;
+      --accent:#2563eb;
+      --accent-soft:#eff6ff;
+      --fact:#0f766e;
+      --fact-soft:#ecfdf5;
+      --proposal:#7c3aed;
+      --proposal-soft:#f5f3ff;
+      --check:#b45309;
+      --check-soft:#fff7ed;
+      --risk:#b91c1c;
+      --risk-soft:#fef2f2;
+      --shadow:0 8px 24px rgba(15,23,42,.06);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#f8fafc 0%, var(--bg) 100%);
+      color:var(--text);
+      font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+      line-height:1.55;
+    }
+    .wrap{
+      max-width:1480px;
+      margin:0 auto;
+      padding:28px;
+    }
+    .hero{
+      background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);
+      color:white;
+      border-radius:24px;
+      padding:30px 34px;
+      box-shadow:var(--shadow);
+      margin-bottom:18px;
+    }
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      opacity:.85;
+    }
+    h1{
+      margin:8px 0 10px;
+      font-size:clamp(28px,3vw,42px);
+      line-height:1.2;
+    }
+    .hero p{
+      margin:0;
+      max-width:880px;
+      color:rgba(255,255,255,.82);
+      font-size:15px;
+    }
+    .legend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:18px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+    }
+    .hero .chip{background:rgba(255,255,255,.12); color:white}
+    .dot{width:8px;height:8px;border-radius:50%}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(12,1fr);
+      gap:16px;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:20px;
+      min-width:0;
+    }
+    .span-12{grid-column:span 12}
+    .span-8{grid-column:span 8}
+    .span-7{grid-column:span 7}
+    .span-6{grid-column:span 6}
+    .span-5{grid-column:span 5}
+    .span-4{grid-column:span 4}
+    .section-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .section-title h2{
+      margin:0;
+      font-size:18px;
+      letter-spacing:-.02em;
+    }
+    .section-title small{
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .label{
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+      margin-bottom:8px;
+    }
+    .fact{background:var(--fact-soft); color:var(--fact)}
+    .proposal{background:var(--proposal-soft); color:var(--proposal)}
+    .check{background:var(--check-soft); color:var(--check)}
+    .risk{background:var(--risk-soft); color:var(--risk)}
+    ul{
+      margin:0;
+      padding-left:18px;
+    }
+    li{margin:6px 0}
+    .mini-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+    .mini{
+      padding:14px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fbfcfe;
+    }
+    .mini strong{display:block;margin-bottom:6px;font-size:14px}
+    .mini p{margin:0;color:var(--muted);font-size:13px}
+    .task-list{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+    .task{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:15px;
+      background:#fff;
+    }
+    .task b{display:block;margin-bottom:6px}
+    .task span{color:var(--muted);font-size:13px}
+    .steps{
+      display:grid;
+      gap:10px;
+    }
+    .step{
+      display:grid;
+      grid-template-columns:44px 1fr;
+      gap:12px;
+      align-items:start;
+      padding:12px 0;
+      border-bottom:1px dashed var(--line);
+    }
+    .step:last-child{border-bottom:0}
+    .num{
+      width:36px;height:36px;border-radius:12px;
+      display:grid;place-items:center;
+      background:var(--accent-soft);
+      color:var(--accent);
+      font-weight:800;
+      font-size:13px;
+    }
+    .step b{display:block;margin-bottom:2px}
+    .step p{margin:0;color:var(--muted);font-size:13px}
+    .table-wrap{overflow:auto}
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      font-size:13px;
+      min-width:680px;
+    }
+    th,td{
+      padding:12px 12px;
+      text-align:left;
+      border-bottom:1px solid var(--line);
+      vertical-align:top;
+    }
+    th{
+      background:#f8fafc;
+      color:#475467;
+      font-size:12px;
+    }
+    tr:last-child td{border-bottom:0}
+    .decision{
+      background:linear-gradient(135deg,#fff7ed 0%,#fffbeb 100%);
+      border:1px solid #fed7aa;
+    }
+    .decision-grid{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:10px;
+    }
+    .decision-item{
+      background:rgba(255,255,255,.72);
+      border:1px solid rgba(251,146,60,.25);
+      border-radius:14px;
+      padding:14px;
+    }
+    .decision-item b{display:block;margin-bottom:6px;font-size:13px}
+    .decision-item span{font-size:12px;color:#7c2d12}
+    .footer-note{
+      margin-top:14px;
+      color:var(--muted);
+      font-size:11px;
+      text-align:right;
+    }
+    @media (max-width:1100px){
+      .span-8,.span-7,.span-6,.span-5,.span-4{grid-column:span 12}
+      .decision-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media (max-width:680px){
+      .wrap{padding:14px}
+      .hero{padding:24px 20px;border-radius:18px}
+      .grid{gap:12px}
+      .card{padding:16px}
+      .mini-grid,.task-list,.decision-grid{grid-template-columns:1fr}
+      h1{font-size:28px}
+    }
+    @media print{
+      body{background:white}
+      .wrap{max-width:none;padding:10mm}
+      .hero,.card{box-shadow:none}
+      .card{break-inside:avoid}
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow">PUBLIC SECTOR · INTERNAL REVIEW</div>
+      <h1>민원처리 현황 시각화 개선</h1>
+      <p>부서별 민원 처리 현황의 수작업 취합과 집계 기준 차이를 개선하고, 긴급·장기 미처리 건을 보다 쉽게 확인할 수 있는 시각화 체계 검토안</p>
+      <div class="legend">
+        <span class="chip"><span class="dot" style="background:#34d399"></span>확인된 사실</span>
+        <span class="chip"><span class="dot" style="background:#c4b5fd"></span>제안사항</span>
+        <span class="chip"><span class="dot" style="background:#fdba74"></span>추가 확인 필요</span>
+      </div>
+    </section>
+
+    <div class="grid">
+
+      <section class="card span-6">
+        <div class="section-title">
+          <h2>1. 추진 배경</h2><small>현황 + 필요성</small>
+        </div>
+        <span class="label fact">확인된 사실</span>
+        <ul>
+          <li>부서별 민원 처리 현황을 월말마다 수작업으로 취합</li>
+          <li>여러 파일에서 관련 수치를 복사하여 보고자료 작성</li>
+          <li>부서별 집계 기준 차이로 수치 재확인 반복</li>
+          <li>긴급 민원 및 장기 미처리 건의 즉시 파악 곤란</li>
+        </ul>
+      </section>
+
+      <section class="card span-6">
+        <div class="section-title">
+          <h2>2. 현황 및 문제점</h2><small>핵심 이슈</small>
+        </div>
+        <div class="mini-grid">
+          <div class="mini">
+            <strong>자료 취합</strong>
+            <p>여러 파일의 수치를 개별 복사하여 보고자료 작성</p>
+          </div>
+          <div class="mini">
+            <strong>집계 기준</strong>
+            <p>부서별 기준 일부 상이로 재확인 반복</p>
+          </div>
+          <div class="mini">
+            <strong>긴급 민원</strong>
+            <p>현황을 즉시 식별하기 어려움</p>
+          </div>
+          <div class="mini">
+            <strong>장기 미처리</strong>
+            <p>대상 건을 일괄 파악하기 어려움</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card span-5">
+        <div class="section-title">
+          <h2>3. 추진 목표</h2><small>검토 방향</small>
+        </div>
+        <span class="label proposal">제안사항</span>
+        <ul>
+          <li>민원 처리 현황 입력·집계 기준 정비</li>
+          <li>공통 입력 방식 적용을 통한 자료 취합 기준 일원화</li>
+          <li>주요 KPI 자동 계산을 통한 반복 집계 업무 축소</li>
+          <li>부서·상태·긴급도별 현황 조회 기능 마련</li>
+          <li>월별 추이 확인을 통한 현황 가시성 제고</li>
+        </ul>
+        <div style="margin-top:12px">
+          <span class="label check">추가 확인 필요</span>
+          <div style="font-size:13px;color:var(--muted)">정량적 성과목표 · 성과지표 · 측정 기준</div>
+        </div>
+      </section>
+
+      <section class="card span-7">
+        <div class="section-title">
+          <h2>4. 주요 추진과제</h2><small>기획 메모 기반</small>
+        </div>
+        <div class="task-list">
+          <div class="task">
+            <b>공통 입력 양식</b>
+            <span>부서별 동일 항목 및 기준에 따른 입력 방식 마련</span>
+          </div>
+          <div class="task">
+            <b>기본 KPI 자동 계산</b>
+            <span>입력 자료 기반 주요 지표 자동 산출 기능 검토</span>
+          </div>
+          <div class="task">
+            <b>조건별 필터</b>
+            <span>부서 · 처리 상태 · 긴급도 기준 조회</span>
+          </div>
+          <div class="task">
+            <b>월별 추이 차트</b>
+            <span>월 단위 민원 처리 현황 변화 시각화</span>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <span class="label check">추가 확인 필요</span>
+          <div style="font-size:13px;color:var(--muted)">KPI 종류 · 정의 · 계산식</div>
+        </div>
+      </section>
+
+      <section class="card span-6">
+        <div class="section-title">
+          <h2>5. 실행 절차</h2><small>검토안</small>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="num">01</div>
+            <div><b>현행 기준 확인</b><p>부서별 입력 항목, 집계 기준, 기존 자료 작성 방식 확인</p></div>
+          </div>
+          <div class="step">
+            <div class="num">02</div>
+            <div><b>공통 기준 설계</b><p>공통 입력 항목, 집계 기준, KPI 정의 및 산식 검토</p></div>
+          </div>
+          <div class="step">
+            <div class="num">03</div>
+            <div><b>시각화 화면 구성</b><p>KPI 표시, 조건별 필터, 월별 추이 차트 구성</p></div>
+          </div>
+          <div class="step">
+            <div class="num">04</div>
+            <div><b>데이터 검증</b><p>기존 보고자료와 산출 결과 비교 및 오류 점검</p></div>
+          </div>
+          <div class="step">
+            <div class="num">05</div>
+            <div><b>운영방식 확정</b><p>입력 주기, 관리·점검 방식, 운영 책임체계 확정</p></div>
+          </div>
+          <div class="step">
+            <div class="num">06</div>
+            <div><b>적용</b><p>확정된 기준에 따라 운영, 필요 시 시범운영 검토</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card span-6">
+        <div class="section-title">
+          <h2>6. 기대효과</h2><small>예상 효과</small>
+        </div>
+        <span class="label proposal">제안사항</span>
+        <ul>
+          <li>자료 취합 기준의 일관성 향상 가능</li>
+          <li>반복 수치 집계 업무 감소 가능</li>
+          <li>주요 민원 현황 확인 편의성 향상 가능</li>
+          <li>긴급 민원 및 장기 미처리 건 식별 용이성 향상 가능</li>
+          <li>월별 민원 처리 현황 변화 파악 용이</li>
+        </ul>
+        <div style="margin-top:14px">
+          <span class="label check">정량 효과는 추가 확인 필요</span>
+          <ul style="font-size:13px;color:var(--muted)">
+            <li>업무시간 절감 규모</li>
+            <li>처리기간 단축 여부</li>
+            <li>민원 처리율 개선 여부</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="card span-8">
+        <div class="section-title">
+          <h2>7. 위험요인 및 대응방안</h2><small>사전 검토</small>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>위험요인</th>
+                <th>확인된 사항</th>
+                <th>대응방안</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>개인정보 노출</b></td>
+                <td>실제 개인정보는 대시보드에 표시하지 않음</td>
+                <td>표시 항목 및 데이터 범위 사전 점검</td>
+              </tr>
+              <tr>
+                <td><b>기존 시스템 변경</b></td>
+                <td>기존 시스템 변경은 별도 검토 필요</td>
+                <td>구축 방식 확정 전 연계·변경 필요 여부 검토</td>
+              </tr>
+              <tr>
+                <td><b>집계 기준 불일치</b></td>
+                <td>부서별 집계 기준 차이 존재</td>
+                <td>공통 입력 항목 및 집계 기준 사전 협의</td>
+              </tr>
+              <tr>
+                <td><b>운영 책임 불명확</b></td>
+                <td>운영 책임자 미정</td>
+                <td>운영 주체 및 데이터 관리 책임 범위 확정</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card span-4">
+        <div class="section-title">
+          <h2>8. 추가 확인사항</h2><small>미확정 항목</small>
+        </div>
+        <span class="label check">추가 확인 필요</span>
+        <ul>
+          <li>구축 일정</li>
+          <li>소요 예산</li>
+          <li>담당 부서</li>
+          <li>운영 책임자</li>
+          <li>적용 대상 부서·사용자 범위</li>
+          <li>공통 입력 항목 및 집계 기준</li>
+          <li>KPI 종류·정의·계산식</li>
+          <li>기존 시스템 연계·변경 필요 여부</li>
+          <li>시범운영·검수 방식</li>
+          <li>성과 측정 기준</li>
+        </ul>
+      </section>
+
+      <section class="card span-12 decision">
+        <div class="section-title">
+          <h2>의사결정이 필요한 사항</h2><small>결정 후 세부기획 가능</small>
+        </div>
+        <div class="decision-grid">
+          <div class="decision-item">
+            <b>추진 범위</b>
+            <span>공통 입력 양식 및 시각화 대시보드까지 포함할지 결정</span>
+          </div>
+          <div class="decision-item">
+            <b>추진 방식</b>
+            <span>별도 구현 또는 기존 시스템 연계·변경 여부 결정</span>
+          </div>
+          <div class="decision-item">
+            <b>관리 기준</b>
+            <span>공통 집계 기준과 KPI 정의·산식 확정 방식 결정</span>
+          </div>
+          <div class="decision-item">
+            <b>추진체계</b>
+            <span>담당 부서 및 운영 책임자 지정</span>
+          </div>
+          <div class="decision-item">
+            <b>자원 투입</b>
+            <span>구축 일정 및 소요 예산 확정</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="footer-note">
+      ※ 본 화면은 제공된 기획 메모 및 정리된 초안에 근거한 내부 검토용 시안이며, 미확정 사항은 임의로 보완하지 않았습니다.
+    </div>
+  </main>
+</body>
+</html>
