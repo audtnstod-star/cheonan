@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>업무 우선순위 룰렛</title>
+<style>
+:root{
+  --bg:#f6f7fb;
+  --panel:#ffffff;
+  --text:#182033;
+  --muted:#72798a;
+  --line:#e8ebf1;
+  --purple:#6d5dfc;
+  --purple2:#8b5cf6;
+  --yellow:#ffc83d;
+  --shadow:0 20px 50px rgba(34,41,72,.10);
+  --radius:24px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Pretendard,"Noto Sans KR",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 15% 5%,rgba(109,93,252,.13),transparent 28rem),
+    radial-gradient(circle at 85% 10%,rgba(255,200,61,.13),transparent 25rem),
+    var(--bg);
+}
+button,input{font:inherit}
+.container{
+  width:min(1240px,calc(100% - 28px));
+  margin:auto;
+  padding:34px 0 60px;
+}
+.hero{
+  display:flex;
+  justify-content:space-between;
+  gap:24px;
+  align-items:flex-end;
+  margin-bottom:22px;
+}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid var(--line);
+  color:var(--purple);
+  font-size:12px;
+  font-weight:900;
+  box-shadow:0 8px 20px rgba(34,41,72,.05);
+}
+h1{
+  margin:12px 0 0;
+  font-size:clamp(32px,5vw,52px);
+  line-height:1.05;
+  letter-spacing:-.05em;
+}
+.hero p{
+  margin:12px 0 0;
+  color:var(--muted);
+  line-height:1.6;
+  font-size:14px;
+}
+.formula{
+  flex:0 0 auto;
+  background:#171b2d;
+  color:#fff;
+  padding:14px 16px;
+  border-radius:16px;
+  font-size:12px;
+  line-height:1.55;
+  box-shadow:var(--shadow);
+}
+.formula b{color:#c4b5fd}
+.layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(400px,.92fr);
+  gap:22px;
+  align-items:start;
+}
+.panel{
+  background:rgba(255,255,255,.96);
+  border:1px solid rgba(230,234,242,.95);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+.panel-title{
+  padding:20px 20px 0;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+}
+.panel-title h2{
+  margin:0;
+  font-size:18px;
+  letter-spacing:-.025em;
+}
+.panel-title span{
+  color:var(--muted);
+  font-size:12px;
+}
+.task-list{
+  padding:15px 20px 20px;
+  display:grid;
+  gap:10px;
+}
+.task{
+  border:1px solid var(--line);
+  border-radius:17px;
+  padding:13px;
+  background:#fff;
+  transition:.18s ease;
+}
+.task:hover{
+  transform:translateY(-1px);
+  border-color:#d9d5ff;
+  box-shadow:0 10px 24px rgba(50,55,90,.06);
+}
+.task-head{
+  display:grid;
+  grid-template-columns:30px 1fr 30px;
+  gap:9px;
+  align-items:center;
+  margin-bottom:10px;
+}
+.num{
+  width:30px;height:30px;
+  display:grid;place-items:center;
+  border-radius:10px;
+  background:#f0efff;
+  color:var(--purple);
+  font-size:12px;font-weight:900;
+}
+.task-name{
+  border:0;
+  outline:0;
+  width:100%;
+  padding:6px 2px;
+  font-weight:850;
+  color:var(--text);
+  border-bottom:2px solid transparent;
+}
+.task-name:focus{border-color:var(--purple)}
+.clear{
+  border:0;background:#f7f8fa;color:#9aa1ae;
+  width:30px;height:30px;border-radius:9px;cursor:pointer;
+}
+.clear:hover{background:#fee2e2;color:#ef4444}
+.range-row{
+  display:grid;
+  grid-template-columns:58px 1fr 30px;
+  gap:9px;
+  align-items:center;
+  margin-top:7px;
+}
+.range-row label{font-size:11px;color:var(--muted);font-weight:800}
+input[type=range]{width:100%;accent-color:var(--purple);cursor:pointer}
+.val{
+  text-align:center;
+  padding:3px 0;
+  border-radius:8px;
+  background:#f1f0ff;
+  color:var(--purple);
+  font-size:11px;
+  font-weight:900;
+}
+.actions{
+  padding:0 20px 20px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.btn{
+  border:0;border-radius:14px;padding:14px 15px;cursor:pointer;font-weight:900;
+  transition:.16s ease;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:scale(.985)}
+.btn-primary{
+  color:#fff;
+  background:linear-gradient(135deg,var(--purple),var(--purple2));
+  box-shadow:0 10px 24px rgba(109,93,252,.22);
+}
+.btn-yellow{
+  background:linear-gradient(135deg,#ffe38b,var(--yellow));
+  color:#694400;
+  box-shadow:0 10px 24px rgba(255,200,61,.22);
+}
+.right{
+  display:grid;
+  gap:22px;
+}
+.roulette-panel{padding:20px}
+.roulette-header{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;
+}
+.roulette-header h2{margin:0;font-size:18px}
+.roulette-header span{font-size:11px;color:var(--muted)}
+.wheel-wrap{
+  position:relative;
+  display:grid;
+  place-items:center;
+  padding:18px 0 8px;
+}
+.pointer{
+  position:absolute;
+  z-index:5;
+  top:2px;
+  left:50%;
+  transform:translateX(-50%);
+  width:0;height:0;
+  border-left:18px solid transparent;
+  border-right:18px solid transparent;
+  border-top:0;
+  border-bottom:34px solid #151827;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.18));
+}
+.wheel-shell{
+  width:min(390px,86vw);
+  aspect-ratio:1;
+  border-radius:50%;
+  padding:10px;
+  background:#171b2d;
+  box-shadow:
+    0 20px 40px rgba(25,28,50,.20),
+    inset 0 0 0 4px rgba(255,255,255,.10);
+  position:relative;
+}
+#wheel{
+  width:100%;
+  height:100%;
+  display:block;
+  border-radius:50%;
+  transform:rotate(0deg);
+  will-change:transform;
+}
+.hub{
+  position:absolute;
+  inset:50% auto auto 50%;
+  transform:translate(-50%,-50%);
+  width:74px;height:74px;
+  border-radius:50%;
+  display:grid;place-items:center;
+  background:#fff;
+  border:8px solid #171b2d;
+  font-size:12px;
+  font-weight:950;
+  color:var(--purple);
+  box-shadow:0 6px 20px rgba(0,0,0,.18);
+  z-index:4;
+}
+.winner-box{
+  margin-top:14px;
+  padding:14px;
+  border-radius:16px;
+  background:linear-gradient(135deg,#f3f1ff,#fff9e8);
+  border:1px solid #e4e0ff;
+  text-align:center;
+}
+.winner-label{
+  font-size:10px;
+  color:var(--muted);
+  font-weight:900;
+  letter-spacing:.12em;
+}
+#winnerName{
+  margin-top:5px;
+  font-size:21px;
+  font-weight:950;
+  letter-spacing:-.03em;
+  min-height:28px;
+}
+.notice{
+  margin-top:12px;
+  border-radius:14px;
+  padding:11px 12px;
+  background:#fff8e6;
+  border:1px solid #ffe08a;
+  color:#7a5a11;
+  font-size:11px;
+  line-height:1.55;
+}
+.results{padding:20px}
+.results h2{margin:0 0 14px;font-size:18px}
+.empty{
+  min-height:150px;
+  border:1px dashed #d9dde7;
+  border-radius:16px;
+  display:grid;place-items:center;
+  text-align:center;
+  padding:18px;
+  color:var(--muted);
+  font-size:13px;
+}
+.rank-list{display:grid;gap:9px}
+.rank{
+  padding:11px 12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fff;
+}
+.rank.top{
+  background:linear-gradient(135deg,#f3f1ff,#faf9ff);
+  border-color:#d9d3ff;
+  box-shadow:inset 4px 0 0 var(--purple);
+}
+.rank-head{
+  display:grid;
+  grid-template-columns:38px 1fr auto;
+  gap:8px;
+  align-items:center;
+  margin-bottom:8px;
+}
+.rank-no{
+  font-size:11px;
+  font-weight:950;
+  color:var(--purple);
+}
+.rank-name{
+  font-size:13px;font-weight:900;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.rank-score{font-size:15px;font-weight:950}
+.bar-track{
+  height:8px;background:#eef0f4;border-radius:999px;overflow:hidden;
+}
+.bar{
+  height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg,#a78bfa,var(--purple));
+  transition:width .8s cubic-bezier(.2,.8,.2,1);
+}
+@media(max-width:940px){
+  .layout{grid-template-columns:1fr}
+  .hero{align-items:flex-start;flex-direction:column}
+}
+@media(max-width:560px){
+  .container{width:calc(100% - 18px);padding-top:22px}
+  .actions{grid-template-columns:1fr}
+  .panel-title,.task-list,.actions{padding-left:14px;padding-right:14px}
+  .roulette-panel,.results{padding:14px}
+  .range-row{grid-template-columns:52px 1fr 28px}
+  .formula{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="hero">
+    <div>
+      <div class="badge">🎯 업무 판단 + 🎡 재미 요소</div>
+      <h1>업무 우선순위 룰렛</h1>
+      <p>점수로 우선순위를 비교하고, 원형 룰렛으로 오늘 먼저 볼 업무를 재미있게 뽑아보세요.</p>
+    </div>
+    <div class="formula"><b>점수</b><br>중요도 × 40 + 긴급도 × 35 + 영향도 × 25<br>최대 500 → 100점 환산</div>
+  </header>
+
+  <section class="layout">
+    <div class="panel">
+      <div class="panel-title">
+        <h2>업무 후보</h2>
+        <span>최대 6개 · 1~5점</span>
+      </div>
+      <div id="taskList" class="task-list"></div>
+      <div class="actions">
+        <button class="btn btn-primary" id="calcBtn">📊 우선순위 계산</button>
+        <button class="btn btn-yellow" id="spinBtn">🎡 룰렛 돌리기</button>
+      </div>
+    </div>
+
+    <div class="right">
+      <section class="panel roulette-panel">
+        <div class="roulette-header">
+          <h2>오늘 먼저 볼 업무</h2>
+          <span>룰렛 결과는 무작위</span>
+        </div>
+
+        <div class="wheel-wrap">
+          <div class="pointer"></div>
+          <div class="wheel-shell">
+            <canvas id="wheel" width="800" height="800"></canvas>
+            <div class="hub">SPIN</div>
+          </div>
+        </div>
+
+        <div class="winner-box">
+          <div class="winner-label">TODAY'S PICK</div>
+          <div id="winnerName">룰렛을 돌려보세요</div>
+        </div>
+
+        <div class="notice">
+          ⚠️ 룰렛 결과는 재미를 위한 무작위 선택입니다. 실제 업무 우선순위는 점수와 업무 상황을 기준으로 판단하세요.
+        </div>
+      </section>
+
+      <section class="panel results">
+        <h2>우선순위 결과</h2>
+        <div id="resultsArea" class="empty">업무 값을 조정하고 ‘우선순위 계산’을 눌러주세요.</div>
+      </section>
+    </div>
+  </section>
+</div>
+
+<script>
+const defaults = ["민원 안내 개선","공원 시설 점검","직원 디지털 교육","행사 준비","주차 민원 개선",""];
+const colors = ["#6D5DFC","#FF8B66","#4CC9A6","#FFCC4D","#5DA9FF","#C17CFF"];
+
+const taskList = document.getElementById("taskList");
+const resultsArea = document.getElementById("resultsArea");
+const calcBtn = document.getElementById("calcBtn");
+const spinBtn = document.getElementById("spinBtn");
+const wheel = document.getElementById("wheel");
+const ctx = wheel.getContext("2d");
+const winnerName = document.getElementById("winnerName");
+
+function rangeRow(label,field){
+  return `<div class="range-row">
+    <label>${label}</label>
+    <input type="range" min="1" max="5" value="3" data-field="${field}" aria-label="${label}">
+    <div class="val">3</div>
+  </div>`;
+}
+
+function createTask(index,name){
+  const el=document.createElement("div");
+  el.className="task";
+  el.innerHTML=`
+    <div class="task-head">
+      <div class="num">${index+1}</div>
+      <input class="task-name" maxlength="40" value="${name}" placeholder="업무명을 입력하세요">
+      <button class="clear" aria-label="업무명 비우기">×</button>
+    </div>
+    ${rangeRow("중요도","importance")}
+    ${rangeRow("긴급도","urgency")}
+    ${rangeRow("영향도","impact")}
+  `;
+  el.querySelectorAll('input[type=range]').forEach(r=>{
+    r.addEventListener("input",()=>{
+      r.closest(".range-row").querySelector(".val").textContent=r.value;
+    });
+  });
+  el.querySelector(".task-name").addEventListener("input",drawWheel);
+  el.querySelector(".clear").addEventListener("click",()=>{
+    el.querySelector(".task-name").value="";
+    drawWheel();
+  });
+  return el;
+}
+defaults.forEach((n,i)=>taskList.appendChild(createTask(i,n)));
+
+function getTasks(){
+  return [...document.querySelectorAll(".task")].map((card,index)=>{
+    const name=card.querySelector(".task-name").value.trim();
+    const importance=+card.querySelector('[data-field=importance]').value;
+    const urgency=+card.querySelector('[data-field=urgency]').value;
+    const impact=+card.querySelector('[data-field=impact]').value;
+    const score=(importance*40+urgency*35+impact*25)/5;
+    return {index,name,importance,urgency,impact,score};
+  }).filter(x=>x.name);
+}
+
+function fitText(text,max=11){
+  return text.length>max ? text.slice(0,max-1)+"…" : text;
+}
+
+function drawWheel(){
+  const tasks=getTasks();
+  ctx.clearRect(0,0,wheel.width,wheel.height);
+  const cx=400, cy=400, r=390;
+
+  if(!tasks.length){
+    ctx.fillStyle="#eceef4";
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#8d95a5";
+    ctx.textAlign="center";
+    ctx.font="700 34px sans-serif";
+    ctx.fillText("업무를 입력하세요",cx,cy+10);
+    return;
+  }
+
+  const slice=(Math.PI*2)/tasks.length;
+  const startBase=-Math.PI/2 - slice/2;
+
+  tasks.forEach((task,i)=>{
+    const start=startBase+i*slice;
+    const end=start+slice;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,end);
+    ctx.closePath();
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(start+slice/2);
+    ctx.textAlign="right";
+    ctx.textBaseline="middle";
+    ctx.fillStyle="#fff";
+    ctx.font=`900 ${tasks.length>=6?26:30}px sans-serif`;
+    ctx.shadowColor="rgba(0,0,0,.16)";
+    ctx.shadowBlur=4;
+    ctx.fillText(fitText(task.name,10),r-46,0);
+    ctx.restore();
+  });
+
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.lineWidth=9;
+  ctx.strokeStyle="rgba(255,255,255,.72)";
+  ctx.stroke();
+
+  for(let i=0;i<tasks.length;i++){
+    const angle=startBase+i*slice;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(angle)*r,cy+Math.sin(angle)*r);
+    ctx.lineWidth=3;
+    ctx.strokeStyle="rgba(255,255,255,.45)";
+    ctx.stroke();
+  }
+}
+
+function calculate(){
+  const tasks=getTasks();
+  if(!tasks.length){
+    resultsArea.className="empty";
+    resultsArea.textContent="업무명을 하나 이상 입력해주세요.";
+    return;
+  }
+
+  tasks.sort((a,b)=>b.score-a.score || b.importance-a.importance || b.urgency-a.urgency || b.impact-a.impact || a.index-b.index);
+  resultsArea.className="";
+  resultsArea.innerHTML=`<div class="rank-list"></div>`;
+  const list=resultsArea.querySelector(".rank-list");
+
+  tasks.forEach((t,i)=>{
+    const row=document.createElement("div");
+    row.className="rank "+(i===0?"top":"");
+    row.innerHTML=`
+      <div class="rank-head">
+        <div class="rank-no">${i+1}위</div>
+        <div class="rank-name">${escapeHtml(t.name)}${i===0?" 🏆":""}</div>
+        <div class="rank-score">${t.score.toFixed(1)}점</div>
+      </div>
+      <div class="bar-track"><div class="bar" data-w="${t.score}%"></div></div>
+    `;
+    list.appendChild(row);
+  });
+
+  requestAnimationFrame(()=>{
+    document.querySelectorAll(".bar").forEach(b=>b.style.width=b.dataset.w);
+  });
+}
+
+let currentRotation=0;
+let spinning=false;
+
+function spin(){
+  const tasks=getTasks();
+  if(!tasks.length){
+    winnerName.textContent="업무명을 먼저 입력해주세요";
+    return;
+  }
+  if(spinning) return;
+  spinning=true;
+  spinBtn.disabled=true;
+  spinBtn.style.opacity=".6";
+  winnerName.textContent="돌아가는 중…";
+
+  const winnerIndex=Math.floor(Math.random()*tasks.length);
+  const sliceDeg=360/tasks.length;
+
+  // Canvas first slice is centered at -90deg (top).
+  // Rotate so winner slice center lands exactly under top pointer.
+  const winnerCenterDeg=winnerIndex*sliceDeg;
+  const baseTurns=6+Math.floor(Math.random()*3);
+  const targetDelta=baseTurns*360 - winnerCenterDeg;
+
+  // Keep rotation monotonically increasing while preserving correct modulo.
+  const currentMod=((currentRotation%360)+360)%360;
+  const desiredMod=((targetDelta%360)+360)%360;
+  let delta=baseTurns*360 + ((desiredMod-currentMod+360)%360);
+
+  currentRotation+=delta;
+  wheel.style.transition="transform 4.4s cubic-bezier(.12,.72,.08,1)";
+  wheel.style.transform=`rotate(${currentRotation}deg)`;
+
+  const done=()=>{
+    wheel.removeEventListener("transitionend",done);
+    winnerName.textContent=tasks[winnerIndex].name+" ✨";
+    winnerName.animate(
+      [{transform:"scale(.82)",opacity:.4},{transform:"scale(1.08)",opacity:1},{transform:"scale(1)"}],
+      {duration:520,easing:"ease-out"}
+    );
+    spinning=false;
+    spinBtn.disabled=false;
+    spinBtn.style.opacity="1";
+  };
+  wheel.addEventListener("transitionend",done,{once:true});
+}
+
+function escapeHtml(str){
+  return str.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+
+calcBtn.addEventListener("click",calculate);
+spinBtn.addEventListener("click",spin);
+
+drawWheel();
+calculate();
+</script>
+</body>
+</html>
